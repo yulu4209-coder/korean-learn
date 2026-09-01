@@ -1,0 +1,11 @@
+{
+  "name": "Korean-learn",
+  "short_name": "Korean-learn",
+  "description": "10 分钟一单元的离线韩语学习工具",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fff8f6",
+  "theme_color": "#e85d75",
+  "lang": "zh-CN",
+  "icons": [{ "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
