@@ -1,58 +1,727 @@
-const KEY = "korean-learn-state-v1";
-const themes = ["rose", "mint", "sky", "apricot"];
-const modules = [
-  { id: 1, title: "韩文与第一声问候", desc: "字母、收音、你好与谢谢", threshold: 60, lessons: [
-    { title:"元音与辅音", words:[{ko:"안녕하세요", roman:"annyeonghaseyo", zh:"您好 / 你好", note:"ㅇ在词首不发音；안녕后与하세요连读。"},{ko:"감사합니다", roman:"gamsahamnida", zh:"谢谢", note:"ㅂ在ㅂ니다中接近 [m]，听感像 감삼니다。"},{ko:"네", roman:"ne", zh:"是 / 好", note:"简短回应，元音清晰。"}] },
-    { title:"礼貌地告别", words:[{ko:"안녕히 가세요", roman:"annyeonghi gaseyo", zh:"再见（对离开的人）", note:"ㅎ在连读中较轻。"},{ko:"안녕히 계세요", roman:"annyeonghi gyeseyo", zh:"再见（对留下的人）", note:"계读作 gye。"},{ko:"죄송합니다", roman:"joesonghamnida", zh:"对不起", note:"ㅚ现代常读接近 we。"}] }
-  ]},
-  { id: 2, title: "认识彼此", desc: "自我介绍与礼貌回应", threshold: 65, lessons: [
-    { title:"说出你的名字", words:[{ko:"저는",roman:"jeoneun",zh:"我是（礼貌）",note:"는为主题助词。"},{ko:"이름",roman:"ireum",zh:"名字",note:"름末尾的ㅁ闭唇收音。"},{ko:"만나서 반갑습니다",roman:"mannaseo bangapseumnida",zh:"很高兴见到您",note:"ㅂ在습니다前听起来接近 [p]。"}] },
-    { title:"简单问答", words:[{ko:"어디에서 왔어요?",roman:"eodieseo wasseoyo?",zh:"您从哪里来？",note:"왔어요中ㅆ为收音。"},{ko:"중국에서 왔어요",roman:"junggugeseo wasseoyo",zh:"我从中国来",note:"국与에连读时收音变为 [g]。"},{ko:"한국어를 배워요",roman:"hangugeo-reul baewoyo",zh:"我学韩语",note:"어를自然连读。"}] }
-  ]},
-  { id: 3, title: "吃喝点餐", desc: "餐厅、饮料与结账", threshold: 70, lessons: [
-    { title:"在餐厅开口", words:[{ko:"메뉴 주세요",roman:"menyu juseyo",zh:"请给我菜单",note:"주세요是常用的“请给我”。"},{ko:"이거 주세요",roman:"igeo juseyo",zh:"请给我这个",note:"指着物品时很实用。"},{ko:"물 주세요",roman:"mul juseyo",zh:"请给我水",note:"ㄹ为收音，舌尖收住。"}] },
-    { title:"结账与口味", words:[{ko:"계산해 주세요",roman:"gyesan-hae juseyo",zh:"请结账",note:"계산的ㅅ在元音前读 [s]。"},{ko:"맛있어요",roman:"masisseoyo",zh:"很好吃",note:"있与어요连读，ㅆ发紧音感。"},{ko:"안 매워요",roman:"an maewoyo",zh:"不辣",note:"ㄴ与ㅁ相邻，顺滑连读。"}] }
-  ]},
-  { id: 4, title: "住宿与交通", desc: "入住、问路、乘车", threshold: 75, lessons: [
-    { title:"办理入住", words:[{ko:"예약했어요",roman:"yeyakhaesseoyo",zh:"我预订了",note:"했어요的ㅎ较弱。"},{ko:"체크인하고 싶어요",roman:"chekeu-inhago sipeoyo",zh:"我想办理入住",note:"外来词按节奏清晰读。"},{ko:"와이파이 있어요?",roman:"waipai isseoyo?",zh:"有 Wi‑Fi 吗？",note:"있어요末尾自然连读。"}] },
-    { title:"问路与乘车", words:[{ko:"지하철역이 어디예요?",roman:"jihacheol-yeogi eodiyeyo?",zh:"地铁站在哪里？",note:"역이连接时ㄱ变为 [g]。"},{ko:"여기로 가 주세요",roman:"yeogiro ga juseyo",zh:"请去这里",note:"出租车指路常用。"},{ko:"내려 주세요",roman:"naeryeo juseyo",zh:"请让我下车",note:"려发 ryeo。"}] }
-  ]},
-  { id: 5, title: "紧急情况与复盘", desc: "求助、复习与生活对话", threshold: 80, lessons: [
-    { title:"需要帮助时", words:[{ko:"도와주세요",roman:"dowajuseyo",zh:"请帮帮我",note:"와与주连贯读出。"},{ko:"화장실이 어디예요?",roman:"hwajangsil-i eodiyeyo?",zh:"洗手间在哪里？",note:"실이中ㄹ与元音连读。"},{ko:"천천히 말해 주세요",roman:"cheoncheonhi malhae juseyo",zh:"请说慢一点",note:"ㅎ较轻但保留节奏。"}] },
-    { title:"最后的生活表达", words:[{ko:"괜찮아요",roman:"gwaenchanayo",zh:"没关系 / 可以",note:"ㅙ现代常接近 we。"},{ko:"얼마예요?",roman:"eolmayeyo?",zh:"多少钱？",note:"얼的ㄹ收音要收住。"},{ko:"카드 돼요?",roman:"kadeu dwaeyo?",zh:"可以刷卡吗？",note:"돼요读 dwaeyo。"}] }
-  ]}
-];
+/* Korean-learn 主逻辑
+ * 流程：模块 → 单元（学）→ 单元练习（练）→ 下一单元 → 模块考核（考）→ 结果
+ */
 
-const quizBank = [
-  {type:"choice",prompt:"‘감사합니다’ 的意思是？",answer:"谢谢",options:["对不起","谢谢","再见","没关系"],word:"감사합니다"},
-  {type:"choice",prompt:"‘请给我菜单’ 的韩语是？",answer:"메뉴 주세요",options:["물 주세요","메뉴 주세요","계산해 주세요","도와주세요"],word:"메뉴 주세요"},
-  {type:"input",prompt:"请输入“你好”的韩语。",answer:"안녕하세요",word:"안녕하세요"},
-  {type:"choice",prompt:"‘지하철역이 어디예요?’ 的意思是？",answer:"地铁站在哪里？",options:["洗手间在哪里？","地铁站在哪里？","多少钱？","有 Wi‑Fi 吗？"],word:"지하철역이 어디예요?"},
-  {type:"input",prompt:"请输入“请帮帮我”的韩语。",answer:"도와주세요",word:"도와주세요"}
-];
+var KEY = "korean-learn-state-v2";
+var themes = ["rose", "mint", "sky", "apricot"];
 
-function freshState() { return { current:1, completed:[], scores:{}, mistakes:[], dailyMinutes:0, lastDate:"", lang:"zh", scheme:"system", theme:themes[Math.floor(Math.random()*themes.length)], onboarding:true }; }
-let state; try { state = {...freshState(), ...JSON.parse(localStorage.getItem(KEY))}; } catch { state=freshState(); }
-let view = "home", lessonIndex = 0, quiz = null;
-function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
-function esc(text){ return String(text).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c])); }
-function t(zh,ko){ return state.lang === "ko" ? ko : zh; }
-function applyTheme(){ document.documentElement.dataset.theme = state.theme === "rose" ? "" : state.theme; document.documentElement.dataset.scheme = state.scheme === "system" ? (matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light") : state.scheme; }
-function mastered(){ return state.completed.length; }
-function currentModule(){ return modules.find(m=>m.id===state.current) || modules[0]; }
-function addMinutes(n=10){ const today=new Date().toISOString().slice(0,10); if(state.lastDate!==today){state.dailyMinutes=0;state.lastDate=today;} state.dailyMinutes=Math.min(10,state.dailyMinutes+n); save(); }
-function speak(text){ if(!("speechSynthesis" in window)){ alert("此浏览器不支持语音合成。请尝试使用 Edge，或安装系统韩语语音。"); return; } const u=new SpeechSynthesisUtterance(text); u.lang="ko-KR"; u.rate=.8; const voices=speechSynthesis.getVoices(); const ko=voices.find(v=>v.lang.toLowerCase().startsWith("ko")); if(ko) u.voice=ko; speechSynthesis.cancel(); speechSynthesis.speak(u); }
-function nav(){ return `<header class="topbar"><div class="brand"><span class="brand-mark">ㅎ</span><span>Korean-learn</span></div><nav class="nav"><button class="${view==='home'?'active':''}" data-nav="home">${t("学习","학습")}</button><button class="${view==='progress'?'active':''}" data-nav="progress">${t("进度","진도")}</button><button class="${view==='settings'?'active':''}" data-nav="settings">${t("设置","설정")}</button></nav></header>`; }
-function home(){ const m=currentModule(), pct=Math.round(mastered()/modules.length*100); return `<main><section class="hero card"><div class="eyebrow">${t("10 分钟，继续向前","10분, 계속 앞으로")}</div><h1>${t("今天，学会一句真正能说出口的韩语。","오늘, 실제로 말할 수 있는 한국어 한 문장.")}</h1><p class="muted">${t("从拼读到韩国短期生活对话。每个模块通过考核后才会解锁下一步。","읽기부터 한국 생활 대화까지. 평가를 통과하면 다음 모듈이 열립니다.")}</p><div class="hero-actions"><button class="btn primary" data-action="continue">${t("继续本模块","이 모듈 계속하기")}</button><button class="btn" data-action="install-help">${t("离线使用说明","오프라인 안내")}</button></div></section><section class="section"><div class="section-head"><h2>${t("今日学习","오늘의 학습")}</h2><span class="muted small">${t("目标 10 分钟","목표 10분")}</span></div><div class="today card"><div><h3>${m.title}</h3><p class="muted small">${m.desc}</p><div class="progress-track"><span style="width:${pct}%"></span></div></div><div class="ring" style="--progress:${state.dailyMinutes*10}%"><b>${state.dailyMinutes}/10</b></div></div></section><section class="section"><div class="section-head"><h2>${t("学习路径","학습 경로")}</h2><span class="muted small">${mastered()}/${modules.length} ${t("完成","완료")}</span></div><div class="module-grid">${modules.map(m=>moduleCard(m)).join("")}</div></section></main>`; }
-function moduleCard(m){ const done=state.completed.includes(m.id), locked=m.id>state.current; return `<article class="module card ${locked?'locked':''}"><div class="module-number">MODULE ${m.id}</div><h3 class="module-title">${esc(m.title)}</h3><p class="muted small">${esc(m.desc)}</p><div class="module-meta"><span>${m.lessons.length*10} ${t("分钟","분")}</span><span>${t("通过线","통과선")} ${m.threshold}</span></div><span class="badge">${done?t("已通过","통과"):(locked?t("待解锁","잠김"):t("进行中","학습 중"))}</span></article>`; }
-function lesson(){ const m=currentModule(), l=m.lessons[lessonIndex % m.lessons.length]; return `<main><section class="lesson card"><div class="lesson-top"><button class="btn ghost" data-nav="home">← ${t("返回","뒤로")}</button><span class="muted small">${t("模块","모듈")} ${m.id} · ${lessonIndex+1}/${m.lessons.length}</span></div><div class="eyebrow">${esc(l.title)}</div><h1>${esc(m.title)}</h1><p class="muted">${t("先听，再看，再自己读一遍。","먼저 듣고, 보고, 직접 읽어 보세요.")}</p><div class="word-list">${l.words.map((w,i)=>`<div class="word-item"><div><div class="korean"><strong>${esc(w.ko)}</strong> <span class="roman">${esc(w.roman)}</span></div><div>${esc(w.zh)}</div><div class="small muted">${t("发音提示：","발음 팁: ")}${esc(w.note)}</div></div><button class="speaker" aria-label="播放 ${esc(w.ko)}" data-speak="${esc(w.ko)}">▶</button></div>`).join("")}</div><div class="pronunciation"><strong>${t("跟读建议：","따라 읽기: ")}</strong>${t("先按词组慢读，再连续读两遍；浏览器若未安装韩语语音，会使用系统默认声音。","먼저 천천히 읽고, 이어서 두 번 읽어 보세요.")}</div><div class="actions"><button class="btn" data-action="prev-lesson" ${lessonIndex===0?'disabled':''}>${t("上一单元","이전")}</button><button class="btn primary" data-action="next-lesson">${lessonIndex+1<m.lessons.length?t("完成并继续","완료하고 계속"):`${t("开始模块考核","모듈 평가 시작")}`}</button></div></section></main>`; }
-function progress(){ const pct=Math.round(mastered()/modules.length*100), mistakes=[...new Set(state.mistakes)].slice(-6); return `<main><section class="hero card"><div class="eyebrow">${t("你的学习足迹","학습 기록")}</div><h1>${pct}% ${t("已完成","완료")}</h1><div class="progress-track"><span style="width:${pct}%"></span></div></section><section class="section stat-grid"><article class="stat card"><span class="muted small">${t("已通过模块","통과한 모듈")}</span><strong>${mastered()} / ${modules.length}</strong></article><article class="stat card"><span class="muted small">${t("今日学习","오늘 학습")}</span><strong>${state.dailyMinutes} ${t("分钟","분")}</strong></article><article class="stat card"><span class="muted small">${t("最近成绩","최근 점수")}</span><strong>${Object.values(state.scores).at(-1) ?? "—"}</strong></article></section><section class="section card lesson"><h2>${t("需要复习","복습할 단어")}</h2>${mistakes.length?`<ul class="mistake-list">${mistakes.map(w=>`<li><span class="korean">${esc(w)}</span><button class="speaker" data-speak="${esc(w)}">▶</button></li>`).join("")}</ul>`:`<div class="empty muted">${t("完成一次考核后，易错词会出现在这里。","평가 후 틀린 단어가 여기에 표시됩니다.")}</div>`}</section></main>`; }
-function settings(){ return `<main><section class="settings card"><h1>${t("设置","설정")}</h1><div class="setting-row"><div><h3>${t("讲解语言","설명 언어")}</h3><span class="muted small">${t("可随时切换中韩显示。","중국어와 한국어를 전환합니다.")}</span></div><div class="segmented"><button data-lang="zh" class="${state.lang==='zh'?'active':''}">中文</button><button data-lang="ko" class="${state.lang==='ko'?'active':''}">한국어</button></div></div><div class="setting-row"><div><h3>${t("显示模式","화면 모드")}</h3><span class="muted small">${t("默认跟随系统，也可手动选择。","기본은 시스템 설정입니다.")}</span></div><div class="segmented"><button data-scheme="system" class="${state.scheme==='system'?'active':''}">${t("自动","자동")}</button><button data-scheme="light" class="${state.scheme==='light'?'active':''}">${t("浅色","밝게")}</button><button data-scheme="dark" class="${state.scheme==='dark'?'active':''}">${t("深色","어둡게")}</button></div></div><div class="setting-row"><div><h3>${t("主题色","테마 색")}</h3><span class="muted small">${t("每次打开会随机选择一套协调配色。","열 때마다 색상이 바뀝니다.")}</span></div><button class="btn" data-action="new-theme">${t("换一种","바꾸기")}</button></div><div class="setting-row"><div><h3>${t("本机数据","내 기기 데이터")}</h3><span class="muted small">${t("学习进度仅保存在当前浏览器。","학습 기록은 이 브라우저에만 저장됩니다.")}</span></div><button class="btn" data-action="reset">${t("重置进度","초기화")}</button></div></section></main>`; }
-function assessment(){ const q=quiz.questions[quiz.index]; const body=q.type==='choice'?`<div>${q.options.map(o=>`<button class="quiz-option" data-answer="${esc(o)}">${esc(o)}</button>`).join("")}</div>`:`<div><input class="answer-input korean" id="answer" autocomplete="off" placeholder="${t("使用韩语键盘输入","한국어 키보드로 입력")}" /><div class="actions"><button class="btn primary" data-action="submit-input">${t("提交答案","답 제출")}</button></div></div>`; return `<main><section class="lesson card"><div class="lesson-top"><button class="btn ghost" data-nav="home">← ${t("退出","나가기")}</button><span class="muted small">${t("模块考核","모듈 평가")} ${quiz.index+1}/${quiz.questions.length}</span></div><div class="eyebrow">${currentModule().title}</div><h1>${t("检验一下掌握情况","실력을 확인해 볼까요?")}</h1><p class="muted">${t("通过线","통과선")} ${currentModule().threshold} ${t("分","점")}</p><div class="notice">${esc(q.prompt)} ${q.type==='choice'?`<button class="speaker" data-speak="${esc(q.word)}">▶</button>`:""}</div>${body}<div id="feedback" class="feedback" aria-live="polite"></div></section></main>`; }
-function results(){ const pass=quiz.score>=currentModule().threshold, m=currentModule(); return `<main><section class="hero card"><div class="eyebrow">${pass?t("模块通过","모듈 통과"):t("再复习一次","다시 복습")}</div><h1>${quiz.score} ${t("分","점")}</h1><p class="muted">${pass?t("你已达到本模块的掌握标准，下一模块现在解锁。","다음 모듈이 열렸습니다."):t("错题已加入复习清单。复习后可以再次考核。","틀린 단어가 복습 목록에 추가되었습니다.")}</p><div class="actions"><button class="btn primary" data-nav="home">${pass?t("查看下一模块","다음 모듈 보기"):t("回到模块复习","모듈 복습")}</button><button class="btn" data-nav="progress">${t("查看进度","진도 보기")}</button></div></section></main>`; }
-function render(){ applyTheme(); let content=view==='home'?home():view==='lesson'?lesson():view==='progress'?progress():view==='settings'?settings():view==='assessment'?assessment():results(); document.querySelector('#app').innerHTML=`<div class="shell">${nav()}${content}</div>`; attach(); }
-function startAssessment(){ const offset=(state.current-1)%2; quiz={index:0,score:0,questions:[...quizBank.slice(0,3),quizBank[3+offset],quizBank[4]]}; view='assessment'; render(); }
-function check(answer){ const q=quiz.questions[quiz.index], correct=answer.trim()===q.answer; const feedback=document.querySelector('#feedback'); document.querySelectorAll('[data-answer]').forEach(b=>{ b.disabled=true; if(b.dataset.answer===q.answer)b.classList.add('correct'); else if(b.dataset.answer===answer)b.classList.add('wrong'); }); if(correct){quiz.score+=20;feedback.textContent=t('正确！','맞았습니다!');feedback.className='feedback good';} else {state.mistakes.push(q.word);save();feedback.textContent=`${t('正确答案：','정답: ')}${q.answer}`;feedback.className='feedback bad';} setTimeout(()=>{quiz.index++; if(quiz.index>=quiz.questions.length){ const m=currentModule(); state.scores[m.id]=quiz.score; if(quiz.score>=m.threshold&&!state.completed.includes(m.id)){state.completed.push(m.id); state.current=Math.min(modules.length,m.id+1);} save(); view='results'; } render();},900); }
-function attach(){ document.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{view=b.dataset.nav;render();}); document.querySelectorAll('[data-speak]').forEach(b=>b.onclick=()=>speak(b.dataset.speak)); document.querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>{state.lang=b.dataset.lang;save();render();}); document.querySelectorAll('[data-scheme]').forEach(b=>b.onclick=()=>{state.scheme=b.dataset.scheme;save();render();}); document.querySelectorAll('[data-answer]').forEach(b=>b.onclick=()=>check(b.dataset.answer)); const act=(name,fn)=>{const el=document.querySelector(`[data-action="${name}"]`);if(el)el.onclick=fn;}; act('continue',()=>{lessonIndex=0;view='lesson';render();}); act('prev-lesson',()=>{lessonIndex--;render();}); act('next-lesson',()=>{addMinutes(); if(lessonIndex+1<currentModule().lessons.length){lessonIndex++;render();}else startAssessment();}); act('submit-input',()=>{const input=document.querySelector('#answer');if(input)check(input.value);}); act('new-theme',()=>{state.theme=themes[(themes.indexOf(state.theme)+1)%themes.length];save();render();}); act('reset',()=>{if(confirm(t('确定重置当前浏览器中的所有学习记录吗？','학습 기록을 초기화할까요?'))){state=freshState();save();render();}}); act('install-help',()=>alert(t('离线使用：首次打开后，在浏览器菜单中选择“安装应用”或“添加到主屏幕”。请先在设备设置中启用韩语键盘。学习进度只保存在当前浏览器。','브라우저 메뉴에서 앱 설치 또는 홈 화면에 추가를 선택하세요. 한국어 키보드를 먼저 켜 주세요.'))); }
-if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+function freshState() {
+  return {
+    v: 2,
+    current: 1,
+    completed: [],
+    scores: {},
+    attempts: {},
+    practiced: {},
+    mistakes: [],
+    dailyMinutes: 0,
+    lastDate: "",
+    lang: "zh",
+    scheme: "system",
+    theme: themes[Math.floor(Math.random() * themes.length)],
+    onboarding: true,
+    ttsNotice: false
+  };
+}
+
+var state;
+try {
+  var raw = JSON.parse(localStorage.getItem(KEY) || "null");
+  state = raw && raw.v === 2 ? Object.assign(freshState(), raw) : freshState();
+} catch (e) { state = freshState(); }
+
+var view = "home";
+var moduleId = state.current;
+var lessonIndex = 0;
+var practice = null;
+var quiz = null;
+var lastResult = null;
+
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]; }); }
+function t(zh, ko) { return state.lang === "ko" ? ko : zh; }
+function norm(s) { return String(s == null ? "" : s).trim().replace(/\s+/g, ""); }
+
+function moduleOf(id) { for (var i = 0; i < MODULES.length; i++) if (MODULES[i].id === id) return MODULES[i]; return MODULES[0]; }
+function currentModule() { return moduleOf(state.current); }
+function isPassed(id) { return state.completed.indexOf(id) >= 0; }
+function isLocked(m) { return !isPassed(m.id) && m.id > state.current; }
+function audioReady() { return Speech.hasKorean(); }
+
+function applyTheme() {
+  var root = document.documentElement;
+  root.dataset.theme = state.theme === "rose" ? "" : state.theme;
+  root.dataset.scheme = state.scheme === "system"
+    ? (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+    : state.scheme;
+}
+
+function today() { return new Date().toISOString().slice(0, 10); }
+function addMinutes(n) {
+  var d = today();
+  if (state.lastDate !== d) { state.dailyMinutes = 0; state.lastDate = d; }
+  state.dailyMinutes += n;
+  save();
+}
+
+function markPracticed(mid, li) {
+  var arr = state.practiced[mid] || (state.practiced[mid] = []);
+  if (arr.indexOf(li) < 0) arr.push(li);
+  save();
+}
+function practicedCount(mid) { return (state.practiced[mid] || []).length; }
+function allPracticed(mid) { return practicedCount(mid) >= moduleOf(mid).lessons.length; }
+function retryLocked(mid) {
+  var a = state.attempts[mid];
+  return !!(a && a.locked) && !allPracticed(mid);
+}
+
+function pushMistake(word) {
+  if (!word) return;
+  var i = state.mistakes.indexOf(word);
+  if (i >= 0) state.mistakes.splice(i, 1);
+  state.mistakes.push(word);
+  if (state.mistakes.length > 40) state.mistakes = state.mistakes.slice(-40);
+  save();
+}
+
+function speak(text) {
+  if (!Speech.supported()) { alert(t("这个浏览器不支持语音合成，建议换用 Edge 或 Chrome。", "이 브라우저는 음성 합성을 지원하지 않습니다.")); return; }
+  Speech.speak(text);
+}
+
+/* ---------------- 顶部提示条 ---------------- */
+
+function notices() {
+  var out = "";
+  if (state.onboarding) {
+    out += '<div class="notice-bar"><span>' +
+      t("学习路径是「学 → 练 → 考」：每个单元学完立刻练习，全部练完才能参加模块考核。答题需要用韩语时，页面会提供内置键盘，无需安装输入法。",
+        "학습 → 연습 → 평가 순서입니다. 한국어 입력이 필요하면 화면 키보드가 나타납니다.") +
+      '</span><button class="icon-btn" data-action="dismiss-onboarding" aria-label="关闭">×</button></div>';
+  }
+  if (!state.ttsNotice && Speech.ready() && !Speech.hasKorean()) {
+    out += '<div class="notice-bar warn"><span>' +
+      t("这台设备没有检测到韩语语音，听音题已自动换成看文字作答。如需听力练习，请在系统设置中安装韩语语音包（iOS：设置 → 辅助功能 → 朗读内容 → 声音；Windows：设置 → 时间和语言 → 语音）。",
+        "기기에 한국어 음성이 없어 듣기 문제를 글로 바꿨습니다.") +
+      '</span><button class="icon-btn" data-action="dismiss-tts" aria-label="关闭">×</button></div>';
+  }
+  return out;
+}
+
+function nav() {
+  var cur = view === "home" || view === "module" || view === "lesson" || view === "practice" || view === "assessment" || view === "result";
+  return '<header class="topbar"><div class="brand"><span class="brand-mark">ㅎ</span><span>Korean-learn</span></div>' +
+    '<nav class="nav">' +
+    '<button class="' + (cur ? "active" : "") + '" data-nav="home">' + t("学习", "학습") + "</button>" +
+    '<button class="' + (view === "progress" ? "active" : "") + '" data-nav="progress">' + t("进度", "진도") + "</button>" +
+    '<button class="' + (view === "settings" ? "active" : "") + '" data-nav="settings">' + t("设置", "설정") + "</button>" +
+    "</nav></header>";
+}
+
+/* ---------------- 首页 ---------------- */
+
+function viewHome() {
+  var m = currentModule();
+  var done = state.completed.length;
+  var pct = Math.round(done / MODULES.length * 100);
+  var mPct = Math.round(practicedCount(m.id) / m.lessons.length * 100);
+
+  var html = '<main>' +
+    '<section class="hero card">' +
+      '<div class="eyebrow">' + t("从四十音开始，一步步到能开口", "사십음부터 말할 수 있을 때까지") + "</div>" +
+      "<h1>" + t("今天，学会一句真正能说出口的韩语。", "오늘, 정말로 말할 수 있는 한국어 한 마디를 배우세요.") + "</h1>" +
+      '<p class="muted">' + t("每个单元都是「学 → 练」，全部练完才能参加模块考核；考核题目只出本模块学过的内容。", "모든 단원은 학습 후 바로 연습하며, 평가 문제는 배운 내용에서만 나옵니다.") + "</p>" +
+      '<div class="hero-actions">' +
+        '<button class="btn primary" data-action="continue">' + t("继续学习", "계속 학습") + "</button>" +
+        '<button class="btn" data-action="install-help">' + t("离线使用说明", "오프라인 안내") + "</button>" +
+      "</div>" +
+    "</section>";
+
+  html += '<section class="section"><div class="section-head"><h2>' + t("今日学习", "오늘의 학습") + '</h2><span class="muted small">' + t("目标 10 分钟", "목표 10분") + "</span></div>" +
+    '<div class="today card"><div>' +
+      "<h3>" + esc(m.title) + "</h3>" +
+      '<p class="muted small">' + esc(m.desc) + " · " + t("及格线", "통과선") + " " + m.threshold + t("分", "점") + "</p>" +
+`      <div class="progress-track"><span style="width:${mPct}%"></span></div>` +
+      '<p class="muted small" style="margin:8px 0 0">' + t("单元练习", "단원 연습") + " " + practicedCount(m.id) + "/" + m.lessons.length + "</p>" +
+    "</div>" +
+    '<div class="ring" style="--progress:' + Math.min(100, state.dailyMinutes * 10) + '%"><b>' + state.dailyMinutes + t("分", "분") + "</b></div>" +
+    "</div></section>";
+
+  html += '<section class="section"><div class="section-head"><h2>' + t("学习路径", "학습 경로") + '</h2><span class="muted small">' + done + "/" + MODULES.length + " " + t("已通过", "통과") + "</span></div>" +
+    '<div class="module-grid">' + MODULES.map(moduleCard).join("") + "</div></section>";
+
+  html += `<section class="section"><div class="progress-track"><span style="width:${pct}%"></span></div>` +
+    `<p class="muted small" style="margin:8px 0 0">总进度 ${pct}%</p></section>`;
+
+  return html + "</main>";
+}
+
+function moduleCard(m) {
+  var locked = isLocked(m);
+  var passed = isPassed(m.id);
+  var badge = passed ? t("已通过", "통과") : locked ? t("待解锁", "잠김") : t("进行中", "학습 중");
+  var score = state.scores[m.id];
+  return '<article class="module card ' + (locked ? "locked" : "") + '" data-module="' + m.id + '">' +
+    '<div class="module-number">MODULE ' + m.id + "</div>" +
+    '<h3 class="module-title">' + esc(m.title) + "</h3>" +
+    '<p class="muted small">' + esc(m.desc) + "</p>" +
+    '<div class="module-meta"><span>' + m.lessons.length + " " + t("个单元", "단원") + "</span><span>" + t("及格线", "통과선") + " " + m.threshold + "</span></div>" +
+    '<div class="module-foot"><span class="badge">' + badge + "</span>" +
+      (score != null ? '<span class="muted small">' + t("最佳", "최고") + " " + score + t("分", "점") + "</span>" : "") +
+    "</div></article>";
+}
+
+/* ---------------- 模块页 ---------------- */
+
+function viewModule() {
+  var m = moduleOf(moduleId);
+  var passed = isPassed(m.id);
+  var locked = retryLocked(m.id);
+  var practiced = practicedCount(m.id);
+  var canExam = passed || allPracticed(m.id);
+
+  var html = '<main><section class="card lesson">' +
+    '<div class="lesson-top"><button class="btn ghost" data-nav="home">← ' + t("返回", "뒤로") + "</button>" +
+    '<span class="muted small">MODULE ' + m.id + " · " + t("及格线", "통과선") + " " + m.threshold + t("分", "점") + "</span></div>" +
+    '<div class="eyebrow">' + esc(m.desc) + "</div>" +
+    "<h1>" + esc(m.title) + "</h1>";
+
+  html += '<div class="meta-row">' +
+    '<span class="chip">' + t("单元练习", "단원 연습") + " " + practiced + "/" + m.lessons.length + "</span>" +
+    (passed ? '<span class="chip good">' + t("已通过", "통과") + "</span>" : "") +
+    (locked ? '<span class="chip warn">' + t("需重做单元练习", "연습을 다시 해야 합니다") + "</span>" : "") +
+    "</div>";
+
+  html += '<div class="unit-list">' + m.lessons.map(function (l, i) {
+    var done = (state.practiced[m.id] || []).indexOf(i) >= 0;
+    return '<button class="unit-item' + (done ? " done" : "") + '" data-lesson="' + i + '">' +
+      '<span class="unit-no">' + (i + 1) + "</span>" +
+      '<span class="unit-body"><strong>' + esc(l.title) + "</strong>" +
+      '<span class="muted small">' + esc(l.sub || "") + " · " + l.items.length + " " + t("条", "개") + "</span></span>" +
+      '<span class="unit-flag">' + (done ? "✓" : "") + "</span></button>";
+  }).join("") + "</div>";
+
+  if (locked) {
+    html += '<div class="notice">' + t("上次考核没通过。把本模块每个单元的练习重做一遍，就能再次考核。", "지난 평가를 통과하지 못했습니다. 단원 연습을 다시 하면 재응시할 수 있습니다.") + "</div>";
+  }
+
+  html += '<div class="actions">' +
+    (canExam
+      ? '<button class="btn primary" data-action="start-exam">' + (passed ? t("重新考核", "다시 평가") : t("开始模块考核", "모듈 평가 시작")) + "</button>"
+      : '<button class="btn" disabled>' + t("完成全部单元练习后解锁考核", "모든 단원 연습을 마치면 열립니다") + "</button>") +
+    "</div>";
+
+  return html + "</section></main>";
+}
+
+/* ---------------- 单元学习页 ---------------- */
+
+function itemCard(m, it) {
+  if (m.kind === "letters") {
+    return '<div class="item-card letter">' +
+      '<div class="letter-head"><div class="letter-big">' + esc(it.ch) + "</div>" +
+        '<div class="letter-side"><div class="letter-syl">' + esc(it.syl) + "</div>" +
+        '<div class="roman">' + esc(it.roman) + "</div>" +
+        '<button class="speaker" data-speak="' + esc(it.syl) + '" aria-label="播放">▶</button></div></div>' +
+      '<div class="item-tip">' + esc(it.tip) + "</div>" +
+      '<div class="item-ex"><span class="korean">' + esc(it.ex.ko) + '</span><span class="muted"> ' + esc(it.ex.zh) + "</span>" +
+        '<button class="speaker small" data-speak="' + esc(it.ex.ko) + '" aria-label="播放">▶</button></div>' +
+      "</div>";
+  }
+  if (m.kind === "rules") {
+    return '<div class="item-card rule">' +
+      '<div class="rule-pair"><span class="from">' + esc(it.ko) + '</span><span class="arrow">→</span><span class="to korean">' + esc(it.real) + "</span>" +
+        '<button class="speaker" data-speak="' + esc(it.ko) + '" aria-label="播放">▶</button></div>' +
+      '<div class="item-sub"><span class="roman">' + esc(it.roman) + "</span><span> · " + esc(it.zh) + "</span></div>" +
+      '<div class="item-tip">' + esc(it.tip) + "</div>" +
+      "</div>";
+  }
+  return '<div class="item-card word">' +
+    '<div class="korean word-ko">' + esc(it.ko) + '<button class="speaker" data-speak="' + esc(it.ko) + '" aria-label="播放">▶</button></div>' +
+    '<div class="roman">' + esc(it.roman) + "</div>" +
+    '<div class="word-zh">' + esc(it.zh) + "</div>" +
+    (it.note ? '<div class="item-tip">' + esc(it.note) + "</div>" : "") +
+    (it.ex ? '<div class="item-ex"><span class="korean">' + esc(it.ex.ko) + '</span><span class="muted"> ' + esc(it.ex.zh) + "</span>" +
+      '<button class="speaker small" data-speak="' + esc(it.ex.ko) + '" aria-label="播放">▶</button></div>' : "") +
+    "</div>";
+}
+
+function viewLesson() {
+  var m = moduleOf(moduleId);
+  var l = m.lessons[lessonIndex];
+  var done = (state.practiced[m.id] || []).indexOf(lessonIndex) >= 0;
+  var isLast = lessonIndex + 1 >= m.lessons.length;
+
+  var html = '<main><section class="card lesson">' +
+    '<div class="lesson-top"><button class="btn ghost" data-action="back-module">← ' + t("单元列表", "단원 목록") + "</button>" +
+    '<span class="muted small">' + m.lessons.length + " " + t("个单元中第", "개 중") + " " + (lessonIndex + 1) + " " + t("个", "번째") + "</span></div>" +
+    '<div class="eyebrow">' + esc(l.sub || "") + "</div>" +
+    "<h1>" + esc(l.title) + "</h1>" +
+    '<p class="muted">' + esc(l.intro) + "</p>";
+
+  if (l.rule) html += '<div class="rule-box"><strong>' + t("规则", "규칙") + "</strong> " + esc(l.rule) + "</div>";
+
+  html += '<div class="item-grid kind-' + m.kind + '">' + l.items.map(function (it) { return itemCard(m, it); }).join("") + "</div>";
+
+  if (m.kind === "letters") {
+    html += '<div class="pronunciation"><strong>' + t("拼读提示：", "조합 팁: ") + "</strong>" +
+      t("韩文字母按「初声 + 中声（+ 终声）」从左到右、从上到下拼成一个方块字。用内置键盘打字时，也是按这个顺序逐块拼出来的。",
+        "한글은 초성+중성(+종성) 순서로 한 칸에 모입니다.") + "</div>";
+  }
+
+  html += '<div class="actions">' +
+    '<button class="btn" data-action="prev-lesson"' + (lessonIndex === 0 ? " disabled" : "") + ">" + t("上一单元", "이전 단원") + "</button>" +
+    '<button class="btn primary" data-action="start-practice">' + (done ? t("再做一次练习", "연습 다시 하기") : t("开始练习", "연습 시작")) + "</button>" +
+    (isLast ? "" : '<button class="btn ghost" data-action="next-lesson">' + t("下一单元", "다음 단원") + "</button>") +
+    "</div></section></main>";
+
+  return html;
+}
+
+/* ---------------- 练习 / 考核 通用题面 ---------------- */
+
+function questionBlock(q, ctx) {
+  var head = '<div class="q-head">' +
+    '<span class="muted small">' + esc(ctx) + "</span>" +
+    '<span class="muted small">' + t("第", "") + " " + (q.index + 1) + " / " + q.total + "</span></div>" +
+    '<div class="q-prompt">' + esc(q.prompt);
+  if (q.speak) head += '<button class="speaker" data-speak="' + esc(q.speak) + '" aria-label="播放">▶</button>';
+  head += "</div>";
+  if (q.sub) head += '<div class="q-sub muted small">' + esc(q.sub) + "</div>";
+  return head;
+}
+
+function viewPractice() {
+  var m = moduleOf(practice.mid);
+  var l = m.lessons[practice.li];
+
+  if (practice.finished) {
+    var total = practice.questions.length;
+    var ok = practice.correct >= total;
+    return '<main><section class="card lesson">' +
+      '<div class="eyebrow">' + t("单元练习完成", "단원 연습 완료") + "</div>" +
+      "<h1>" + practice.correct + " / " + total + "</h1>" +
+      '<p class="muted">' + (ok ? t("全部答对，这个单元过关了。", "전부 맞았습니다.") : t("答错的题看一遍解析，印象会更深。", "틀린 문제의 해설을 확인하세요.")) + "</p>" +
+      '<div class="actions">' +
+        '<button class="btn" data-action="re-practice">' + t("再练一次", "다시 연습") + "</button>" +
+        (practice.li + 1 < m.lessons.length
+          ? '<button class="btn primary" data-action="next-lesson">' + t("下一单元", "다음 단원") + "</button>"
+          : '<button class="btn primary" data-action="back-module">' + t("返回单元列表", "단원 목록으로") + "</button>") +
+      "</div></section></main>";
+  }
+
+  var q = practice.questions[practice.index];
+  q.index = practice.index;
+  q.total = practice.questions.length;
+
+  var body;
+  if (q.type === "input") {
+    body = '<input class="answer-input korean" id="answer" readonly inputmode="none" placeholder="' + t("点这里，用内置韩语键盘输入", "여기를 눌러 한글 키보드로 입력") + '" value="' + esc(practice.typed || "") + '" />' +
+      '<div class="actions"><button class="btn primary" data-action="submit-input">' + t("提交", "제출") + "</button></div>";
+  } else {
+    body = '<div class="option-list">' + q.options.map(function (o) {
+      return '<button class="quiz-option" data-answer="' + esc(o) + '">' + esc(o) + "</button>";
+    }).join("") + "</div>";
+  }
+
+  return '<main><section class="card lesson">' +
+    '<div class="lesson-top"><button class="btn ghost" data-action="back-module">' + t("退出练习", "연습 종료") + "</button>" +
+    '<span class="muted small">' + esc(l.title) + " · " + t("随堂练习", "연습") + "</span></div>" +
+    questionBlock(q, m.title + " · " + l.title) +
+    body +
+    '<div id="feedback" class="feedback" aria-live="polite"></div>' +
+    '<div class="actions" id="practice-next" style="display:none">' +
+      '<button class="btn primary" data-action="next-question">' + t("下一题", "다음 문제") + "</button></div>" +
+    "</section></main>";
+}
+
+function viewAssessment() {
+  var m = moduleOf(quiz.mid);
+  var q = quiz.questions[quiz.index];
+  q.index = quiz.index;
+  q.total = quiz.questions.length;
+
+  var body;
+  if (q.type === "input") {
+    body = '<input class="answer-input korean" id="answer" readonly inputmode="none" placeholder="' + t("点这里，用内置韩语键盘输入", "여기를 눌러 한글 키보드로 입력") + '" value="' + esc(quiz.typed || "") + '" />' +
+      '<div class="actions"><button class="btn primary" data-action="submit-input">' + t("提交答案", "답 제출") + "</button></div>";
+  } else {
+    body = '<div class="option-list">' + q.options.map(function (o) {
+      return '<button class="quiz-option" data-answer="' + esc(o) + '">' + esc(o) + "</button>";
+    }).join("") + "</div>";
+  }
+
+  var pct = Math.round(quiz.index / quiz.questions.length * 100);
+
+  return '<main><section class="card lesson">' +
+    '<div class="lesson-top"><button class="btn ghost" data-action="quit-exam">' + t("退出考核", "평가 종료") + "</button>" +
+    '<span class="muted small">' + t("模块考核", "모듈 평가") + " · " + t("及格线", "통과선") + " " + m.threshold + "</span></div>" +
+    `<div class="progress-track" style="margin-bottom:14px"><span style="width:${pct}%"></span></div>` +
+    questionBlock(q, m.title) +
+    body +
+    '<div id="feedback" class="feedback" aria-live="polite"></div>' +
+    "</section></main>";
+}
+
+function viewResult() {
+  var m = moduleOf(lastResult.mid);
+  var pass = lastResult.pass;
+  var html = '<main><section class="card lesson">' +
+    '<div class="eyebrow">' + (pass ? t("模块通过", "모듈 통과") : t("再复习一次", "다시 복습")) + "</div>" +
+    "<h1>" + lastResult.score + " " + t("分", "점") + "</h1>" +
+    '<p class="muted">' + t("及格线", "통과선") + " " + m.threshold + " " + t("分", "점") + " · " +
+      t("答对", "정답") + " " + lastResult.correct + " / " + lastResult.total + "</p>" +
+    `<div class="progress-track" style="margin:14px 0"><span style="width:${Math.min(100, lastResult.score)}%"></span></div>`;
+
+  html += '<p class="muted">' + (pass
+    ? t("你已达到本模块的掌握标准，下一模块现在解锁。", "다음 모듈이 열렸습니다.")
+    : t("没通过的题目已加入复习清单。把本模块各单元的练习重做一遍后，就可以再次考核。", "틀린 항목이 복습 목록에 추가되었습니다. 단원 연습을 다시 하면 재응시할 수 있습니다.")) + "</p>";
+
+  html += '<div class="actions">' +
+    (pass
+      ? '<button class="btn primary" data-action="back-home">' + t("回到学习", "학습으로") + "</button>"
+      : '<button class="btn primary" data-action="back-module">' + t("去复习单元", "단원 복습하러") + "</button>") +
+    '<button class="btn" data-nav="progress">' + t("查看进度", "진도 보기") + "</button>" +
+    "</div></section></main>";
+  return html;
+}
+
+/* ---------------- 进度页 ---------------- */
+
+function viewProgress() {
+  var pct = Math.round(state.completed.length / MODULES.length * 100);
+  var mistakes = state.mistakes.slice(-8).reverse();
+
+  var html = '<main><section class="hero card">' +
+    '<div class="eyebrow">' + t("你的学习足迹", "학습 기록") + "</div>" +
+    "<h1>" + pct + "% " + t("已完成", "완료") + "</h1>" +
+    `<div class="progress-track"><span style="width:${pct}%"></span></div>` +
+    "</section>";
+
+  html += '<section class="section stat-grid">' +
+    '<article class="stat card"><span class="muted small">' + t("已通过模块", "통과한 모듈") + "</span><strong>" + state.completed.length + " / " + MODULES.length + "</strong></article>" +
+    '<article class="stat card"><span class="muted small">' + t("今日学习", "오늘 학습") + "</span><strong>" + state.dailyMinutes + " " + t("分钟", "분") + "</strong></article>" +
+    '<article class="stat card"><span class="muted small">' + t("待复习", "복습할 항목") + "</span><strong>" + state.mistakes.length + "</strong></article>" +
+    "</section>";
+
+  html += '<section class="section card lesson"><h2>' + t("模块成绩", "모듈 성적") + "</h2>" +
+    '<div class="score-list">' + MODULES.map(function (m) {
+      var s = state.scores[m.id];
+      var passed = isPassed(m.id);
+      return '<div class="score-row"><span>' + esc(m.title) + "</span>" +
+        '<span class="muted small">' + (s != null ? s + t("分", "점") : "—") + "</span>" +
+        '<span class="badge ' + (passed ? "good" : "") + '">' + (passed ? t("已通过", "통과") : t("未通过", "미통과")) + "</span></div>";
+    }).join("") + "</div></section>";
+
+  html += '<section class="section card lesson"><h2>' + t("需要复习", "복습할 항목") + "</h2>";
+  html += mistakes.length
+    ? '<ul class="mistake-list">' + mistakes.map(function (w) {
+        return '<li><span class="korean">' + esc(w) + '</span><button class="speaker" data-speak="' + esc(w) + '">▶</button></li>';
+      }).join("") + "</ul>"
+    : '<div class="empty muted">' + t("答错的条目会自动出现在这里。", "틀린 항목이 여기에 표시됩니다.") + "</div>";
+  return html + "</section></main>";
+}
+
+/* ---------------- 设置页 ---------------- */
+
+function viewSettings() {
+  var voice = Speech.hasKorean() ? Speech.voiceName() : t("未检测到韩语语音", "한국어 음성 없음");
+  return '<main><section class="settings card"><h1>' + t("设置", "설정") + "</h1>" +
+    '<div class="setting-row"><div><h3>' + t("界面语言", "표시 언어") + '</h3><span class="muted small">' + t("界面文案可切换中韩；课程讲解保持中文。", "설명은 중국어로 유지됩니다.") + "</span></div>" +
+      '<div class="segmented"><button data-lang="zh" class="' + (state.lang === "zh" ? "active" : "") + '">中文</button>' +
+      '<button data-lang="ko" class="' + (state.lang === "ko" ? "active" : "") + '">한국어</button></div></div>' +
+
+    '<div class="setting-row"><div><h3>' + t("显示模式", "화면 모드") + '</h3><span class="muted small">' + t("默认跟随系统，也可手动选择。", "기본은 시스템 설정입니다.") + "</span></div>" +
+      '<div class="segmented"><button data-scheme="system" class="' + (state.scheme === "system" ? "active" : "") + '">' + t("自动", "자동") + "</button>" +
+      '<button data-scheme="light" class="' + (state.scheme === "light" ? "active" : "") + '">' + t("浅色", "밝게") + "</button>" +
+      '<button data-scheme="dark" class="' + (state.scheme === "dark" ? "active" : "") + '">' + t("深色", "어둡게") + "</button></div></div>" +
+
+    '<div class="setting-row"><div><h3>' + t("主题色", "테마 색") + '</h3><span class="muted small">' + t("每次打开会随机选择一套协调配色。", "열 때마다 색상이 바뀝니다.") + "</span></div>" +
+      '<button class="btn" data-action="new-theme">' + t("换一种", "바꾸기") + "</button></div>" +
+
+    '<div class="setting-row"><div><h3>' + t("发音语音", "발음 음성") + '</h3><span class="muted small">' + esc(voice) + "</span></div>" +
+      '<button class="btn" data-action="test-voice">' + t("试听", "들어보기") + "</button></div>" +
+
+    '<div class="setting-row"><div><h3>' + t("本机数据", "내 기기 데이터") + '</h3><span class="muted small">' + t("学习进度仅保存在当前浏览器。", "학습 기록은 이 브라우저에만 저장됩니다.") + "</span></div>" +
+      '<button class="btn danger" data-action="reset">' + t("重置进度", "초기화") + "</button></div>" +
+    "</section></main>";
+}
+
+/* ---------------- 渲染与事件 ---------------- */
+
+function applyHash() {
+  var h = (location.hash || "").slice(1);
+  if (!h) return;
+  var p = {};
+  h.split("&").forEach(function (kv) {
+    var kv2 = kv.split("=");
+    p[kv2[0]] = kv2[1];
+  });
+  if (p.view) view = p.view;
+  if (p.module) moduleId = Number(p.module);
+  if (p.lesson) lessonIndex = Number(p.lesson);
+  if (p.mid) moduleId = Number(p.mid);
+}
+
+function render() {
+  applyTheme();
+  try { applyHash(); } catch (e) { console.error('hash', e); }
+
+  // 直接通过 URL hash 跳到练习/考核时，对应状态为 null → 现场初始化（必须在 view 函数前）
+  if (view === "practice" && !practice && moduleId && Number.isInteger(lessonIndex)) {
+    var pm = moduleOf(moduleId);
+    if (pm) { practice = { mid: moduleId, li: lessonIndex, index: 0, correct: 0, typed: "", answered: false, finished: false, questions: Quiz.lessonQuiz(pm, lessonIndex, audioReady()) }; }
+  }
+  if (view === "assessment" && !quiz && moduleId) {
+    var qm = moduleOf(moduleId);
+    if (qm) { quiz = { mid: moduleId, index: 0, correct: 0, typed: "", answered: false, questions: Quiz.moduleQuiz(qm, audioReady()) }; }
+  }
+
+  var content;
+  try {
+    if (view === "home") content = viewHome();
+    else if (view === "module") content = viewModule();
+    else if (view === "lesson") content = viewLesson();
+    else if (view === "practice") content = viewPractice();
+    else if (view === "assessment") content = viewAssessment();
+    else if (view === "result") content = viewResult();
+    else if (view === "progress") content = viewProgress();
+    else content = viewSettings();
+  } catch (e) {
+    content = '<main><section class="card"><h1>页面错误</h1><pre style="white-space:pre-wrap;color:#b00">' + esc(e.stack || (e.message + '\n' + (e.lineNumber||'') + ':' + (e.columnNumber||''))) + '</pre></section></main>';
+  }
+
+  document.getElementById("app").innerHTML = '<div class="shell">' + notices() + nav() + content + "</div>";
+  attach();
+  window.scrollTo(0, 0);
+}
+
+function showFeedback(cls, text, explain) {
+  var fb = document.getElementById("feedback");
+  if (!fb) return;
+  fb.className = "feedback " + cls;
+  fb.innerHTML = esc(text) + (explain ? '<div class="explain muted small">' + esc(explain) + "</div>" : "");
+}
+
+function lockOptions(correct, chosen) {
+  document.querySelectorAll("[data-answer]").forEach(function (b) {
+    b.disabled = true;
+    if (b.dataset.answer === correct) b.classList.add("correct");
+    else if (b.dataset.answer === chosen) b.classList.add("wrong");
+  });
+}
+
+function openKeyboardIfNeeded() {
+  var input = document.getElementById("answer");
+  if (!input) return;
+  HangulKeyboard.open({ input: input, onSubmit: function () { submitTyped(); } });
+}
+
+function submitTyped() {
+  var input = document.getElementById("answer");
+  if (!input) return;
+  HangulKeyboard.close();
+  answerQuestion(input.value);
+}
+
+function answerQuestion(value) {
+  if (view === "practice") {
+    var q = practice.questions[practice.index];
+    var ok = norm(value) === norm(q.answer);
+    practice.typed = value;
+    if (ok) { practice.correct++; showFeedback("good", t("正确！", "맞았습니다!"), q.explain); }
+    else { pushMistake(q.answer); showFeedback("bad", t("正确答案：", "정답: ") + q.answer, q.explain); }
+    if (q.type === "choice") lockOptions(q.answer, value);
+    var next = document.getElementById("practice-next");
+    if (next) next.style.display = "flex";
+    practice.answered = true;
+  } else if (view === "assessment") {
+    var aq = quiz.questions[quiz.index];
+    var okA = norm(value) === norm(aq.answer);
+    quiz.typed = value;
+    if (okA) { quiz.correct++; showFeedback("good", t("正确！", "맞았습니다!"), aq.explain); }
+    else { pushMistake(aq.answer); showFeedback("bad", t("正确答案：", "정답: ") + aq.answer, aq.explain); }
+    if (aq.type === "choice") lockOptions(aq.answer, value);
+    quiz.answered = true;
+    setTimeout(function () { nextAssessment(); }, 1400);
+  }
+}
+
+function nextPractice() {
+  practice.typed = "";
+  practice.answered = false;
+  practice.index++;
+  if (practice.index >= practice.questions.length) {
+    markPracticed(practice.mid, practice.li);
+    addMinutes(5);
+    practice.finished = true;
+  }
+  render();
+}
+
+function nextAssessment() {
+  quiz.typed = "";
+  quiz.answered = false;
+  quiz.index++;
+  if (quiz.index >= quiz.questions.length) finishAssessment();
+  else render();
+}
+
+function finishAssessment() {
+  var m = moduleOf(quiz.mid);
+  var total = quiz.questions.length;
+  var score = Math.round(quiz.correct / total * 100);
+  var pass = score >= m.threshold;
+
+  var prev = state.scores[quiz.mid];
+  if (pass) {
+    if (prev == null || score > prev) state.scores[quiz.mid] = score;
+    if (!isPassed(quiz.mid)) state.completed.push(quiz.mid);
+    if (quiz.mid === state.current) state.current = Math.min(MODULES.length, quiz.mid + 1);
+    state.attempts[quiz.mid] = { locked: false, last: score };
+  } else {
+    state.scores[quiz.mid] = prev == null ? score : Math.max(prev, score);
+    state.attempts[quiz.mid] = { locked: true, last: score };
+    state.practiced[quiz.mid] = [];
+  }
+
+  addMinutes(5);
+  save();
+  lastResult = { mid: quiz.mid, score: score, pass: pass, correct: quiz.correct, total: total };
+  moduleId = quiz.mid;
+  quiz = null;
+  view = "result";
+  render();
+}
+
+function attach() {
+  document.querySelectorAll("[data-nav]").forEach(function (b) {
+    b.onclick = function () {
+      HangulKeyboard.close();
+      view = b.dataset.nav;
+      if (view === "home") moduleId = state.current;
+      render();
+    };
+  });
+
+  document.querySelectorAll("[data-speak]").forEach(function (b) {
+    b.onclick = function (e) { e.stopPropagation(); speak(b.dataset.speak); };
+  });
+
+  document.querySelectorAll("[data-module]").forEach(function (b) {
+    b.onclick = function () {
+      var id = Number(b.dataset.module);
+      if (isLocked(moduleOf(id))) return;
+      moduleId = id;
+      view = "module";
+      render();
+    };
+  });
+
+  document.querySelectorAll("[data-lesson]").forEach(function (b) {
+    b.onclick = function () { lessonIndex = Number(b.dataset.lesson); view = "lesson"; render(); };
+  });
+
+  document.querySelectorAll("[data-answer]").forEach(function (b) {
+    b.onclick = function () {
+      if (view === "practice" && practice.answered) return;
+      if (view === "assessment" && quiz.answered) return;
+      answerQuestion(b.dataset.answer);
+    };
+  });
+
+  document.querySelectorAll("[data-lang]").forEach(function (b) {
+    b.onclick = function () { state.lang = b.dataset.lang; save(); render(); };
+  });
+
+  document.querySelectorAll("[data-scheme]").forEach(function (b) {
+    b.onclick = function () { state.scheme = b.dataset.scheme; save(); render(); };
+  });
+
+  var input = document.getElementById("answer");
+  if (input) {
+    input.onclick = function () { openKeyboardIfNeeded(); };
+    input.onfocus = function () { openKeyboardIfNeeded(); };
+    // 进入 input 题时自动弹出内置键盘（用户点过 input 之后也能再次点击唤起）
+    if (view === "practice" || view === "assessment") {
+      setTimeout(function () { try { openKeyboardIfNeeded(); } catch (e) {} }, 0);
+    }
+  }
+
+  var act = function (name, fn) {
+    var el = document.querySelector('[data-action="' + name + '"]');
+    if (el) el.onclick = fn;
+  };
+
+  act("continue", function () { moduleId = state.current; view = "module"; render(); });
+  act("back-home", function () { view = "home"; moduleId = state.current; render(); });
+  act("back-module", function () { HangulKeyboard.close(); practice = null; view = "module"; render(); });
+  act("quit-exam", function () { HangulKeyboard.close(); quiz = null; view = "module"; render(); });
+  act("prev-lesson", function () { if (lessonIndex > 0) lessonIndex--; render(); });
+  act("next-lesson", function () {
+    var m = moduleOf(moduleId);
+    HangulKeyboard.close();
+    if (lessonIndex + 1 < m.lessons.length) { lessonIndex++; view = "lesson"; }
+    else view = "module";
+    practice = null;
+    render();
+  });
+
+  act("start-practice", function () {
+    var m = moduleOf(moduleId);
+    practice = { mid: moduleId, li: lessonIndex, index: 0, correct: 0, typed: "", answered: false, finished: false, questions: Quiz.lessonQuiz(m, lessonIndex, audioReady()) };
+    view = "practice";
+    render();
+  });
+  act("re-practice", function () {
+    var m = moduleOf(moduleId);
+    practice = { mid: moduleId, li: lessonIndex, index: 0, correct: 0, typed: "", answered: false, finished: false, questions: Quiz.lessonQuiz(m, lessonIndex, audioReady()) };
+    render();
+  });
+  act("next-question", function () { nextPractice(); });
+  act("submit-input", function () { submitTyped(); });
+
+  act("start-exam", function () {
+    var m = moduleOf(moduleId);
+    quiz = { mid: moduleId, index: 0, correct: 0, typed: "", answered: false, questions: Quiz.moduleQuiz(m, audioReady()) };
+    view = "assessment";
+    render();
+  });
+
+  act("dismiss-onboarding", function () { state.onboarding = false; save(); render(); });
+  act("dismiss-tts", function () { state.ttsNotice = true; save(); render(); });
+
+  act("new-theme", function () {
+    state.theme = themes[(themes.indexOf(state.theme) + 1) % themes.length];
+    save();
+    render();
+  });
+
+  act("test-voice", function () { speak("안녕하세요"); });
+
+  act("reset", function () {
+    if (confirm(t("确定重置当前浏览器中的所有学习记录吗？此操作无法撤销。", "모든 학습 기록을 초기화할까요? 되돌릴 수 없습니다."))) {
+      state = freshState();
+      save();
+      moduleId = state.current;
+      lessonIndex = 0;
+      practice = null;
+      quiz = null;
+      view = "home";
+      render();
+    }
+  });
+
+  act("install-help", function () {
+    alert(t("离线使用：首次打开后，在浏览器菜单中选择“安装应用”或“添加到主屏幕”。答题时页面会提供内置韩语键盘，不需要在系统里安装韩语输入法。学习进度只保存在当前浏览器。",
+      "브라우저 메뉴에서 앱 설치 또는 홈 화면에 추가를 선택하세요."));
+  });
+}
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () { navigator.serviceWorker.register("./sw.js").catch(function () {}); });
+}
+
+Speech.onChange(function () { if (view === "settings") render(); });
 render();
