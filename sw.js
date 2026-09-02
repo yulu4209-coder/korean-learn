@@ -46,10 +46,11 @@ self.addEventListener("fetch", (event) => {
         return res;
       })
       .catch(() =>
-        caches.match(event.request).then((cached) => {
+        // ignoreSearch：资源带 ?v=4 之类版本号时，仍能命中离线缓存
+        caches.match(event.request, { ignoreSearch: true }).then((cached) => {
           if (cached) return cached;
           // 导航请求（离线时打开应用）回退到首页
-          if (event.request.mode === "navigate") return caches.match("./index.html");
+          if (event.request.mode === "navigate") return caches.match("./index.html", { ignoreSearch: true });
           return Response.error();
         })
       )

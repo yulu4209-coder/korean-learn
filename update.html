@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#e85d75" />
+    <title>更新 Korean-learn</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        min-height: 100%;
+        background: #fdf7f8;
+        color: #2b2b33;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+          "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        padding-bottom: calc(24px + env(safe-area-inset-bottom));
+      }
+      .box {
+        width: 100%;
+        max-width: 420px;
+        background: #fff;
+        border: 1px solid #f0dde1;
+        border-radius: 18px;
+        padding: 28px 22px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(232, 93, 117, 0.08);
+      }
+      .logo {
+        width: 62px;
+        height: 62px;
+        margin: 0 auto 16px;
+        border-radius: 18px;
+        background: linear-gradient(140deg, #ff8fa3, #e85d75);
+        color: #fff;
+        font-size: 30px;
+        line-height: 62px;
+        font-weight: 600;
+      }
+      h1 { margin: 0 0 8px; font-size: 20px; }
+      #msg { margin: 0 0 16px; font-size: 14px; color: #6b6b78; line-height: 1.6; }
+      #log {
+        list-style: none;
+        margin: 0 0 18px;
+        padding: 12px 14px;
+        background: #faf6f7;
+        border-radius: 12px;
+        text-align: left;
+        font-size: 13px;
+        color: #6b6b78;
+        line-height: 1.9;
+        min-height: 44px;
+      }
+      #log li::before { content: "· "; color: #e85d75; }
+      #log li.err::before { content: "! "; color: #c0392b; }
+      button {
+        width: 100%;
+        padding: 13px 16px;
+        border: 0;
+        border-radius: 12px;
+        background: #e85d75;
+        color: #fff;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button:active { background: #d24c63; }
+      .tip { margin: 14px 0 0; font-size: 12px; color: #9a9aa8; line-height: 1.7; }
+      .spin {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        margin-right: 6px;
+        vertical-align: -2px;
+        border: 2px solid #f3c9d2;
+        border-top-color: #e85d75;
+        border-radius: 50%;
+        animation: sp 0.8s linear infinite;
+      }
+      @keyframes sp { to { transform: rotate(360deg); } }
+    </style>
+  </head>
+  <body>
+    <div class="box">
+      <div class="logo">한</div>
+      <h1>正在更新应用</h1>
+      <p id="msg"><span class="spin"></span>正在清理旧版本缓存…</p>
+      <ul id="log"></ul>
+      <button id="go" hidden>立即进入新版</button>
+      <p class="tip">
+        更新完成后，把这个页面加入书签，<br />以后只要点它就能一键拉到最新版。
+      </p>
+    </div>
+
+    <script>
+      (function () {
+        var log = document.getElementById("log");
+        var msg = document.getElementById("msg");
+        var go = document.getElementById("go");
+        var jumped = false;
+        // 时间戳参数：绕开浏览器与运营商的一切 HTTP 缓存
+        var target = "./index.html?up=" + Date.now();
+
+        function add(text, isErr) {
+          var li = document.createElement("li");
+          if (isErr) li.className = "err";
+          li.textContent = text;
+          log.appendChild(li);
+        }
+        function jump() {
+          if (jumped) return;
+          jumped = true;
+          location.replace(target);
+        }
+        go.onclick = jump;
+
+        var steps = [];
+
+        if ("serviceWorker" in navigator) {
+          steps.push(
+            navigator.serviceWorker.getRegistrations().then(function (regs) {
+              add("注销旧离线服务：" + regs.length + " 个");
+              return Promise.all(regs.map(function (r) { return r.unregister(); }));
+            })
+          );
+        } else {
+          add("本浏览器未启用离线服务");
+        }
+
+        if (window.caches) {
+          steps.push(
+            caches.keys().then(function (keys) {
+              add("清除本地缓存：" + keys.length + " 组");
+              return Promise.all(keys.map(function (k) { return caches.delete(k); }));
+            })
+          );
+        }
+
+        Promise.all(steps).then(
+          function () {
+            add("清理完成");
+            msg.textContent = "清理完成，正在进入新版…";
+            go.hidden = false;
+            setTimeout(jump, 800);
+          },
+          function (e) {
+            add("清理出错：" + (e && e.message ? e.message : e), true);
+            msg.textContent = "清理遇到问题，可以直接进入新版";
+            go.hidden = false;
+          }
+        );
+
+        // 兜底：无论如何 4 秒后强制跳转，避免卡在这一页
+        setTimeout(jump, 4000);
+      })();
+    </script>
+  </body>
+</html>

@@ -5,18 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#e85d75" />
     <meta name="description" content="Korean-learn：从四十音开始的离线韩语学习工具。" />
-    <link rel="manifest" href="./manifest.webmanifest" />
+    <!-- 每次改动 js/css 后，把下面所有 ?v=4 一起递增，避免用户拿到"新页面配旧脚本" -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <link rel="manifest" href="./manifest.webmanifest?v=4" />
     <link rel="icon" href="./icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="./icon-180.png" />
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=4" />
     <title>Korean-learn</title>
   </head>
   <body>
     <div id="app"></div>
-    <script src="./data.js"></script>
-    <script src="./speech.js"></script>
-    <script src="./quiz.js"></script>
-    <script src="./kbd.js"></script>
-    <script src="./app.js"></script>
+    <script src="./data.js?v=4"></script>
+    <script src="./speech.js?v=4"></script>
+    <script src="./quiz.js?v=4"></script>
+    <script src="./kbd.js?v=4"></script>
+    <script src="./app.js?v=4"></script>
   </body>
 </html>

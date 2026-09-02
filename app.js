@@ -448,7 +448,8 @@ function viewSettings() {
 
     '<div class="setting-row"><div><h3>' + t("本机数据", "내 기기 데이터") + '</h3><span class="muted small">' + t("学习进度仅保存在当前浏览器。", "학습 기록은 이 브라우저에만 저장됩니다.") + "</span></div>" +
       '<button class="btn danger" data-action="reset">' + t("重置进度", "초기화") + "</button></div>" +
-    "</section></main>";
+    "</section>" +
+    '<p class="muted small" style="text-align:center;margin:14px 0 0">' + t("当前版本 ", "현재 버전 ") + SW_VERSION + " · " + BUILD_DATE + "</p></main>";
 }
 
 /* ---------------- 渲染与事件 ---------------- */
@@ -737,6 +738,7 @@ function attach() {
    旧版本是"缓存优先"，会导致上传新版后手机上一直显示旧页面；
    这里保证新版 SW 一就绪就立刻切换到新内容，不用手动清缓存。 */
 var SW_VERSION = "v4";
+var BUILD_DATE = "2026-09-02";
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
     navigator.serviceWorker.register("./sw.js?ver=" + SW_VERSION).then(function (reg) {
